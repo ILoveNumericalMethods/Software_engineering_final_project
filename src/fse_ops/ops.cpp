@@ -67,7 +67,7 @@ torch::Tensor median_filter5x5(const torch::Tensor& x) {
                 } else {
                     std::nth_element(window.begin(), window.begin() + 12,
                                      window.end());
-                    output_row[col] = window[12];
+                    output_row[col] = window[11];
                 }
             }
         }
