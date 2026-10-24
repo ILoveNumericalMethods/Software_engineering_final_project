@@ -1,0 +1,36 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    env:
+      MAX_JOBS: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install "setuptools>=64" wheel ruff pytest
+          python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run Ruff
+        run: ruff check .
+
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps --no-build-isolation -w dist
+
+      - name: Test installed wheel with pytest
+        run: |
+          python -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          /tmp/test-venv/bin/pip install pytest
+          /tmp/test-venv/bin/pip install dist/*.whl
+          cp -r tests /tmp/proj-tests
+          cd /tmp
+          /tmp/test-venv/bin/python -c "import fse_ops; print(fse_ops.__file__); assert '/tmp/test-venv/' in fse_ops.__file__"
+          /tmp/test-venv/bin/python -m pytest -q /tmp/proj-tests
