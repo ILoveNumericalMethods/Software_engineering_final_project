@@ -4,9 +4,7 @@ For each image and each valid window position, return the median (the 13th
 smallest value) of the 25 values in its 5×5 neighborhood. The filter uses
 stride 1 and no padding. For a leading index tuple \(b\),
 
-\[
-y_{b,i,j}=\operatorname{median}\{x_{b,i+u,j+v}:0\leq u,v<5\}.
-\]
+$y_{b,i,j}=\operatorname{median}\{x_{b,i+u,j+v}:0\leq u,v<5\}.$
 
 Exact one-line PyTorch reference:
 
