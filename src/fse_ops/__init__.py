@@ -1,4 +1,4 @@
-import torch
+import torch as torch
 
 from ._C import median_filter5x5
 
