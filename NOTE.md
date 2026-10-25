@@ -8,7 +8,7 @@ The wheel was installed with system Python (`/usr/bin/python3`), while tests
 used `/opt/venv/bin/python3`. The fix installs the wheel with `python3 -m pip`
 in the runtime venv and checks `import fse_ops` during the build.
 
-Fix commit: `043124e079a6a14da9fdf95f3f5fa10af20cf9ea`.
+Fix commit: `7c99e7ab5a3b1a2c18704f79c8ef6ea134057015`.
 
 ## Testing Bug Detection
 
