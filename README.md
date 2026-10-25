@@ -1,5 +1,7 @@
 # median_filter5x5
 
+CPU C++ extension, version 0.1.0. Python function: `fse_ops.median_filter5x5`.
+
 For each image and each valid window position, return the median (the 13th
 smallest value) of the 25 values in its 5×5 neighborhood. The filter uses
 stride 1 and no padding. For a leading index tuple \(b\),
@@ -20,57 +22,75 @@ accepted. Exact value agreement is supported for finite inputs.
 Output: a CPU `float32` tensor of shape `(..., H-4, W-4)`, with every image
 filtered independently.
 
-## Docker bug
+Autograd is not implemented.
 
-During the Docker debugging exercise, the image built successfully, but pytest
-failed during collection with `ModuleNotFoundError: No module named 'fse_ops'`.
-The wheel was installed with system Python (`/usr/bin/python3`), while tests
-used `/opt/venv/bin/python3`. The fix installs the wheel with `python3 -m pip`
-in the runtime venv and checks `import fse_ops` during the build.
+## Build and test
 
-Fix commit: `043124e079a6a14da9fdf95f3f5fa10af20cf9ea`.
-
-## Smoke check
-
-From the repository root inside the course Linux environment, run:
+Run from the project root inside the prepared course Linux sandbox
+(Python 3.12 and a C++ compiler).
 
 ```bash
+python3 -m venv /tmp/build-venv
+/tmp/build-venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
+PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cpu /tmp/build-venv/bin/pip wheel . --no-deps -w dist
+
+python3 -m venv /tmp/try-venv
+/tmp/try-venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
+/tmp/try-venv/bin/pip install pytest numpy
+/tmp/try-venv/bin/pip install dist/*.whl
+PROJECT_DIR=$(pwd)
+cp -r tests /tmp/proj-tests
+cd /tmp
+/tmp/try-venv/bin/python -c "import fse_ops; print(fse_ops.__file__)"
+/tmp/try-venv/bin/python -m pytest -q /tmp/proj-tests
+cd "$PROJECT_DIR"
+```
+
+Expected: an import from the venv's `site-packages` and `5 passed`.
+The extra CPU index also supplies torch to the isolated build. Build and
+runtime PyTorch versions must match. Docker, CI, and smoke pin version 2.10.0.
+
+Example after installation:
+
+```bash
+/tmp/try-venv/bin/python -c "import torch; from fse_ops import median_filter5x5; print(median_filter5x5(torch.arange(25, dtype=torch.float32).reshape(5, 5)))"
+```
+
+Result: `tensor([[12.]])`.
+
+## Checks
+
+From the project root in the same sandbox:
+
+```bash
+/tmp/build-venv/bin/pip install ruff
+/tmp/build-venv/bin/ruff check .
+PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cpu make wheel PYTHON=/tmp/build-venv/bin/python
+make install PYTHON=/tmp/try-venv/bin/python
+make test PYTHON=/tmp/try-venv/bin/python
+make clean
+chmod 755 tools/smoke.sh
 ./tools/smoke.sh
 ```
 
-## Testing Bug Detection
+The smoke script creates fresh venvs, checks the Linux wheel tag, imports
+and calls the installed operation outside the checkout, runs pytest, and
+prints `OK`. CI runs Ruff and installed-wheel pytest on pushes and pull requests.
 
-To verify that the tests can detect incorrect behavior, we intentionally introduced a bug in `src/fse_ops/ops.cpp` by modifying the following line:
+The five tests cover shape, dtype, exact values, mixed values/batching, and
+invalid dtype. Changing `window[12]` to `window[11]` made `test_exact_values`
+and `test_mixed_values_and_batch` fail. Screenshots:
+[first failure](images/first.png), [second failure](images/second.png).
 
-**Correct version:**
+## Docker
 
-```cpp
-output_row[col] = window[12];
+From the project root, with Docker available:
+
+```bash
+docker build -t fse-ops:0.1 .
+docker run --rm fse-ops:0.1
 ```
 
-**Version with the bug:**
-
-```cpp
-output_row[col] = window[11];
-```
-
-A 5×5 window contains 25 elements, so the median corresponds to index 12 (using zero-based indexing). Using index 11 instead can produce incorrect results.
-
-After rebuilding the C++ extension, I ran the tests using `pytest`. Two out of five tests failed:
-
-- `test_exact_values`
-- `test_mixed_values_and_batch`
-
-**1. Result of test_exact_values**
-
-![test_exact_values failure](images/first.png)
-
-**2. Result of test_mixed_values_and_batch**
-
-![test_mixed_values_and_batch failure](images/second.png)
-
-### Analysis of the Results
-
-The pytest output shows that only the tests checking numerical values failed, while the tests for output shape, data type, and error handling passed.
-
-This suggests that the problem is likely related to the median calculation. Therefore, it makes sense to check how the median element is selected after calling `std::nth_element`.
+The two-stage image builds and installs the wheel, then runs the five tests.
+The bug report, unsupported case, and profiling command/result are in
+[NOTE.md](NOTE.md).
