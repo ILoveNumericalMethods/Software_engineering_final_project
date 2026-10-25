@@ -47,6 +47,8 @@ The pytest output shows that only the tests checking numerical values failed, wh
 
 This suggests that the problem is likely related to the median calculation. Therefore, it makes sense to check how the median element is selected after calling `std::nth_element`.
 
+Fix commit: `6cf76ebde50b686962af5f75c852984da40ae992`.
+
 ## Unsupported case
 
 A CPU float32 tensor of shape `(4, 4)` is too small for a 5x5 window.
