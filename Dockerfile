@@ -1,4 +1,8 @@
-FROM fse-07-testing AS build
+FROM ubuntu:24.04 AS build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-dev python3-venv build-essential ninja-build ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -15,7 +19,11 @@ COPY . .
 RUN python3 -m pip wheel . --no-deps --no-build-isolation -w /wheels
 RUN ls /wheels/*.whl
 
-FROM fse-07-testing AS runtime
+FROM ubuntu:24.04 AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv ca-certificates libstdc++6 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
