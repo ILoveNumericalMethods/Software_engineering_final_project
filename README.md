@@ -22,13 +22,21 @@ filtered independently.
 
 ## Docker bug
 
-Basically during debugging, the wheel was installed with `/usr/bin/python3`,
-while tests ran with Python from `/opt/venv`. The image built, but pytest
-failed with `ModuleNotFoundError: No module named 'fse_ops'`. Using
-`python3 -m pip` installs the wheel in the runtime venv. An import check
-during the build now checks that the package is available there.
+During the Docker debugging exercise, the image built successfully, but pytest
+failed during collection with `ModuleNotFoundError: No module named 'fse_ops'`.
+The wheel was installed with system Python (`/usr/bin/python3`), while tests
+used `/opt/venv/bin/python3`. The fix installs the wheel with `python3 -m pip`
+in the runtime venv and checks `import fse_ops` during the build.
 
-Fix commit: add later
+Fix commit: `043124e079a6a14da9fdf95f3f5fa10af20cf9ea`.
+
+## Smoke check
+
+From the repository root inside the course Linux environment, run:
+
+```bash
+./tools/smoke.sh
+```
 
 ## Testing Bug Detection
 
