@@ -28,7 +28,8 @@ RUN python3 -c "import torch; print('PyTorch:', torch.__version__); assert torch
 RUN python3 -m pytest --version
 
 COPY --from=build /wheels /wheels
-RUN /usr/bin/python3 -m pip install --break-system-packages /wheels/*.whl && /usr/bin/python3 -m pip show fse-ops
+RUN python3 -m pip install /wheels/*.whl && python3 -m pip show fse-ops
+RUN python3 -c "import fse_ops; print(fse_ops.__file__)"
 COPY tests /opt/tests
 
 WORKDIR /opt
