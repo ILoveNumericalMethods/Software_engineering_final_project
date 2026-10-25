@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS build
+FROM fse-07-testing AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-dev python3-venv build-essential ninja-build ca-certificates \
@@ -19,7 +19,7 @@ COPY . .
 RUN python3 -m pip wheel . --no-deps --no-build-isolation -w /wheels
 RUN ls /wheels/*.whl
 
-FROM ubuntu:24.04 AS runtime
+FROM fse-07-testing AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-venv ca-certificates libstdc++6 libgomp1 \
