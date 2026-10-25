@@ -20,6 +20,16 @@ accepted. Exact value agreement is supported for finite inputs.
 Output: a CPU `float32` tensor of shape `(..., H-4, W-4)`, with every image
 filtered independently.
 
+## Docker bug
+
+Basically during debugging, the wheel was installed with `/usr/bin/python3`,
+while tests ran with Python from `/opt/venv`. The image built, but pytest
+failed with `ModuleNotFoundError: No module named 'fse_ops'`. Using
+`python3 -m pip` installs the wheel in the runtime venv. An import check
+during the build now checks that the package is available there.
+
+Fix commit: add later
+
 ## Testing Bug Detection
 
 To verify that the tests can detect incorrect behavior, we intentionally introduced a bug in `src/fse_ops/ops.cpp` by modifying the following line:
